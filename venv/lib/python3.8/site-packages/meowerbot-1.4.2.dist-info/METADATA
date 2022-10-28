@@ -1,0 +1,74 @@
+Metadata-Version: 2.1
+Name: meowerbot
+Version: 1.4.2
+Summary: A meower bot lib for py
+Home-page: https://github.com/showierdata9978/MeowerBot
+License: MEOW
+Author: showierdata9978
+Author-email: 68120127+showierdata9978@users.noreply.github.com
+Requires-Python: >=3.8,<4.0
+Classifier: License :: Other/Proprietary License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Dist: cloudlink (>=0.1.7,<0.2.0)
+Requires-Dist: requests (>=2.28.0,<3.0.0)
+Project-URL: Repository, https://github.com/showierdata9978/MeowerBot
+Description-Content-Type: text/markdown
+
+# MeowerBot.py
+
+A bot lib for Meower
+
+## How to use
+
+```py
+
+from MeowerBot import Client
+
+c = Client("Username","password",False) 
+
+def on_raw_msg(msg:dict, listener:dict):
+
+        print(f'msg: {msg["u"]}: {msg["p"]}')
+        if not msg["u"] == c.username:
+            if msg["u"] == "Discord":
+                msg["u"] = msg["p"].split(":")[0]
+                msg["p"] = msg["p"].split(":")[1].strip() 
+            if msg["p"].startswith(f'@{c.username}'):   
+                c.send_msg(f'Hello, {msg["u"]}!')
+
+def on_close(exiting:bool):
+    ...
+
+def on_error(error):
+    ...
+
+def on_login():
+    ...
+
+def handle_pvar(pvar:dict, origin:str, var, lisserner):
+    ...
+
+def handle_pmsg(msg:dict, origin:str, lissiner):
+    ...
+
+def on_status_change(status, isserner):
+    c.satuscodee = status
+
+def on_raw_packet(packet:dict, lissener)
+    ...
+
+c.callback(handle_pmsg)
+c.callback(handle_pvar)
+c.callback(on_login)
+c.callback(on_close)
+c.callback(on_error)
+c.callback(on_raw_msg)
+c.callback(on_status_change)
+c.callback(on_raw_packet)
+
+c.start()
+``` 
+
