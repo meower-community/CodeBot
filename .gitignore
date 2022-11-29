@@ -1,2 +1,5 @@
 db/
 *.json
+
+*replit*
+*venv*
