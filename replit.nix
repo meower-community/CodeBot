@@ -1,5 +1,6 @@
 { pkgs }: {
   deps = [
+    pkgs.python39Packages.poetry
     pkgs.python39Packages.isort
     pkgs.python38Packages.black
     pkgs.python38Full
