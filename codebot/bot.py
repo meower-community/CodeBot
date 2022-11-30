@@ -98,15 +98,15 @@ class CodeBot:
     def error(self, e, *args, bot=None):
        traceback.print_exc()
 
-    def message(msg, bot=""):
+    def message(self, msg, bot=None):
       if msg.ctx.user.username == self.bot.username: return
       
       if msg.user.username == "Discord":
         msg.user.username = msg.data.split(": ")[0]
         msg.data = msg.data.split(": ")[1]
       
-      if not msg.ctx.message.data.startswith(self.bot.prefix): return
-      message.data = message.data.split(self.bot.prefix, 1)[1]
+      if not msg.data.startswith(self.bot.prefix): return
+      msg.data = msg.data.split(self.bot.prefix, 1)[1]
       bot.run_command(msg)
 	
     def __init__(self, debug_file):
