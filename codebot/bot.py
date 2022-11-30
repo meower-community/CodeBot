@@ -54,9 +54,6 @@ email_names = [
 ]
 
   
-global traceback.print_exc
-
-
 
 
 class command(_Command):
@@ -88,7 +85,7 @@ class BotMngr(Bot):
       try:
         self.commands[args[0]].run_cmd(args[1:], message.ctx)
       except Exception as e:
-        if self.bot.debug:
+        if self.debug:
            traceback.print_exc()
         self.run_cb("error", args=(e,))
             
@@ -116,8 +113,9 @@ class CodeBot:
         self.bot = BotMngr(self, prefix="@CodeBot", debug=True, debug_out=debug_file)
         self.ignore_functions = []
 
-        self.bot.callback('error', self.error)
-        self.bot.callback("message", self.message)
+        self.bot.callback(self.error, 'error')
+        self.bot.callback(self.message, "message")
+
 			
         self.commands = {func.name:func for func in self.__dict__.values() if isinstance(func, command)}
         
@@ -154,7 +152,7 @@ class CodeBot:
             
           spec = inspect.signature(Command.function)
           args = spec.parameters
-          cur_line += f"{self.prefix} {name}"
+          cur_line += f"{self.bot.prefix} {name}"
           if 'self' in args: args = args[1:]
           args = args[1:] #context
                         
@@ -202,6 +200,7 @@ class CodeBot:
     The required args are (in json)
       post:str
         """)
+
     @command()
     def hack(self, ctx:CTX, user):
         if user == env['Username']:
@@ -383,7 +382,7 @@ class CodeBot:
 
     @command()
     def ban(self, ctx, person):
-        if not ctx.user.username == "ShowierData9978":
+        if not ctx.user.username in self.admins:
             ctx.send_msg(
                 f"@{ctx.user.username} you dont have permision to ban from this bot.",
                 raw)
@@ -393,7 +392,7 @@ class CodeBot:
 
     @command()
     def unban(self, ctx, person):
-        if not ctx.user.username == "ShowierData9978":
+        if not ctx.user.username in self.admins:
             ctx.send_msg(
                 f"@{ctx.user.username} you dont have permision to unban from this bot.",
                 )
@@ -409,7 +408,7 @@ class CodeBot:
 
     @command()
     def add_todo(self, ctx, *args):  # *args is the todo
-        if not ctx.user.username == "ShowierData9978":
+        if not ctx.user.username in self.admins:
             ctx.send_msg(f"@{ctx.user.username} you dont have permision to add a todo",
                           )
             return
@@ -430,7 +429,7 @@ class CodeBot:
 
     @command()
     def remove_todo(self, ctx, *args):
-        if not ctx.user.username == "ShowierData9978":
+        if not ctx.user.username in self.admins:
             ctx.send_msg(
                 f"@{ctx.user.username} you dont have permision to remove a todo")
             return
