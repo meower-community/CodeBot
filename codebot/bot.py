@@ -2,30 +2,32 @@ from MeowerBot import Bot, __version__
 from MeowerBot.context import CTX, Post, User
 from MeowerBot._Commands import _Command
 import inspect
+import copy
 
 import datetime
 
-from os import environ as env 
+from os import environ as env
 import shlex
 from random import randint, choice
 import time
 import string
 import uuid
+import optparse
 #calc current time
 
 import traceback
 
 from montydb import MontyClient, set_storage
 
-set_storage("./db/CodeBot", cache_modified=0) 
+set_storage("./db/CodeBot", cache_modified=0)
 
 
 now = datetime.datetime.now()
 filename = now.strftime("%d-%m-%Y_%H:%M:%S") + ".txt"
 
 with open("logs/" + filename, "w"):
-	pass #create the file
-	
+  pass #create the file
+
 
 #constents
 
@@ -53,12 +55,12 @@ email_names = [
     "electron", "tempt", "disagree", "holiday", "series"
 ]
 
-  
+
 
 
 class command(_Command):
   def run_cmd(self, *args, ctx):
-    self.func(self.bot.cmds, ctx, *args)
+    self.func(ctx, *args)
 
 
   def __call__(self, func):
@@ -72,12 +74,12 @@ class BotMngr(Bot):
   """
          func overides
   """
-    
+
   def __init__(self, bot, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.cmds = bot
-        
-        
+
+
   def run_command(self, message):
       args = shlex.split(str(message.data))
 
@@ -88,9 +90,57 @@ class BotMngr(Bot):
         if self.debug:
            traceback.print_exc()
         self.run_cb("error", args=(e,))
-            
 
 
+def  RunDecoratorOnInit(decorator ,*args, **kwargs):
+  def inner(function):
+    def wrapper(*args, **kwargs):
+      function(*args, **kwargs)
+    wrapper.original = function
+    wrapper.ClassRunDecorator = True
+    wrapper.decorator = decorator
+    func.args = args
+    func.kwargs = kwargs
+    return wrapper
+  return inner
+
+
+def cls_RunDecoratorOnInit(cls):
+  """
+  A Util function for running decorators on
+  """
+  need_updated = []
+  for method in inspect.getmembers(cls, predicate=inspect.isfunction):
+    if hasattr(method[1], "ClassRunDecorator"):
+       need_updated.append(method[0])
+
+
+  def inner(*args, **kwargs):
+     self = cls(*args, **kwargs)
+     for name in need_updated:
+       wrapper = getattr(self, name)
+       func = wrapper.orginal
+       decorator = copy.deepcopy(wrapper.decorator)
+
+
+       func_args = func.args
+       func_kwargs = func.kwargs
+
+       decorated = decorator(func)
+
+       inspect.Signature(decorated).bind(*func_args, *func_kwargs)
+
+
+       setattr(self, name, decorated)
+     return self
+
+
+
+
+
+
+
+@cls_RunDecoratorOnInit
 class CodeBot:
     def run(self, *args):
       self.bot.run(*args)
@@ -100,15 +150,15 @@ class CodeBot:
 
     def message(self, msg, bot=None):
       if msg.ctx.user.username == self.bot.username: return
-      
+
       if msg.user.username == "Discord":
         msg.user.username = msg.data.split(": ")[0]
         msg.data = msg.data.split(": ")[1]
-      
+
       if not msg.data.startswith(self.bot.prefix): return
       msg.data = msg.data.split(self.bot.prefix, 1)[1]
       bot.run_command(msg)
-	
+
     def __init__(self, debug_file):
         self.bot = BotMngr(self, prefix="@CodeBot", debug=True, debug_out=debug_file)
         self.ignore_functions = []
@@ -116,9 +166,10 @@ class CodeBot:
         self.bot.callback(self.error, 'error')
         self.bot.callback(self.message, "message")
 
-			
+
+    def generate_help(self):
         self.commands = {func.name:func for func in self.__dict__.values() if isinstance(func, command)}
-        
+
         self.pages = []
 
 
@@ -129,7 +180,7 @@ class CodeBot:
         cur_line = "'"
         curr_page = []
         self.pages = []
-            
+
         i = 0
         p_s = 0
         for name , Command in self.commands.values():
@@ -147,38 +198,38 @@ class CodeBot:
 
             curr_line = "'"
             i = 0
-               
+
           i+=1
-            
+
           spec = inspect.signature(Command.function)
           args = spec.parameters
           cur_line += f"{self.bot.prefix} {name}"
           if 'self' in args: args = args[1:]
           args = args[1:] #context
-                        
+
           for arg in args.values():
             if arg.default is not arg.empty:
               curr_line += f"<{arg.name}"
             else:
               curr_line += f"<{arg.name}"
 
-    @command(name="help")
+    @ RunDecoratorOnInit(command(name="help"))
     def help(self, ctx, page):
-    
-        if len(self.pages) < page: 
+
+        if len(self.pages) < page:
            ctx.reply(f"I only have {len(self.pages)} help pages ):")
            return
-        
+
         ctx.reply("\n" + "\n".join(self.pages[page]))
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def mimic(self, ctx:CTX, *args):
       if not ctx.user.username in self.admins:
         ctx.reply("This Command Is Bot admin locked ):")
         return
       ctx.send_msg(" ".join(args))
-    
-    @command()
+
+    @ RunDecoratorOnInit(command())
     def info(self, ctx:CTX, about):
       if about == "Bot":
            ctx.send_msg("""
@@ -192,7 +243,7 @@ class CodeBot:
       elif about.lower() == "Webhooks":
         ctx.send_msg("""
         webhooks is a bot that is hosted by @ShowierData9978 on his RPI.
-    You can send a message through it with the URL 
+    You can send a message through it with the URL
     https://webhooks.meower.org/post/home
 
     @ShowierData9978 personaly uses reqbin.com to send POST Requests.
@@ -201,7 +252,7 @@ class CodeBot:
       post:str
         """)
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def hack(self, ctx:CTX, user):
         if user == env['Username']:
             ctx.send_msg("Im Not hacking myself, RUDE.")
@@ -224,11 +275,11 @@ class CodeBot:
 
         email+="@"+choice(email_names)+"."+choice([
             "com", "org", "net", "edu", "gov", "mil", "biz", "info", "name"])
-      
+
         ctx.send_msg(f"Email: {email}")
 
         time.sleep(randint(0, 2))
-      
+
         password = ''
         for _ in range(0, randint(12, 16)):
             password += choice(string.printable + string.digits +
@@ -262,7 +313,7 @@ class CodeBot:
         time.sleep(randint(1, 4))
         ctx.send_msg(f"Finished Hacking @{user}`s Account")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def send_coins(self, ctx, user, coins):
       if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
         self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
@@ -274,22 +325,22 @@ class CodeBot:
           {"username":ctx.user.username}
         )
       recever = self.db.CodeBot.users.find_one({"username":user})
-                                         
+
       if not sender['coins'] > int(coins):
         ctx.reply("Im sorry, but you dont have enough coins")
-        return 
-        
+        return
+
       self.db.CodeBot.users.update_one(
-        {"username":ctx.user.username}, 
+        {"username":ctx.user.username},
         {
           "$set":{
             "coins":sender['coins'] - int(coins)
           }
         }
       )
-      
+
       self.db.CodeBot.users.update_one(
-        {"username":ctx.user.username}, 
+        {"username":ctx.user.username},
         {
           "$set":{
             "coins":sender['coins'] + int(coins)
@@ -298,15 +349,15 @@ class CodeBot:
       )
 
       self.reply("sent the coins!")
-    
-    @command
+
+    @ RunDecoratorOnInit(command())
     def beg(self, ctx):
         if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
         usr = self.db.CodeBot.users.find_one({"username":ctx.user.username})
-        
-      
+
+
         if not time.time() - usr["t"] >= 60 * 3:  # 3 minutes
             ctx.send_msg(
                 f"@{ctx.user.username} You cant run this command yet (cooldown)\n you have " + str(datetime.timedelta(seconds=round((60*3-(time.time() - usr["t"]))))) + " left")
@@ -322,40 +373,40 @@ class CodeBot:
             self.db.CodeBot.users.update_one({"username":ctx.user.username}, {"$set":{"coins":usr["coins"] + amm}})
 
 
-              
+
         self.db.CodeBot.users.update_one({"username":ctx.user.username}, {"$set":{"t":time.time()}})
         ctx.send_msg(f"@{ctx.user.username} You got {amm} coins!")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def bal(self, ctx, *args):
         try:
           usr = args[0]
         except:
           usr = ctx.user.username
 
-      
+
         if not self.db.CodeBot.users.find_one({"username":usr}):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
         user = self.db.CodeBot.users.find_one({"username":usr})
-      
+
         ctx.send_msg(
                 f"@{ctx.user.username} user {usr} has {user['coins']} coins!")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def inventory(self, ctx):
         if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
-        usr = self.db.CodeBot.users.find_one({'username':ctx.user.username}) 
-        
+        usr = self.db.CodeBot.users.find_one({'username':ctx.user.username})
+
         ctx.send_msg(
             f"@{ctx.user.username} you have the the items\n" +
             ", \n".join(usr["collectables"])
-            
+
         )
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def shop(self, ctx):
         msg = ""
         for n, v in Shop.items():
@@ -368,19 +419,19 @@ class CodeBot:
                 f"@{ctx.user.username} The item of '{item}' was not found in the shop"
                 )
             return
-        
+
         usr = self.db.CodeBot.users.find_one({'username':ctx.user.username})
         if not Shop[item] <= usr["coins"]:
             ctx.send_msg(
                 f"@{ctx.user.username} You do not have enough coins for {item}")
 
-        
+
         self.db.CodeBot.users.update_one(
-          {"username":ctx.user.username}, 
+          {"username":ctx.user.username},
           {"$push":{"collectables":[item]}, "$set": {"coins": usr["coins"] - Shop[item]}
         })
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def ban(self, ctx, person):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
@@ -390,7 +441,7 @@ class CodeBot:
         self.db.CodeBot.bans.insert_one({'_id':uuid.uuid4(), "username": person.replace("@", "")})
         ctx.send_msg(f"Banned @{person} from this bot")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def unban(self, ctx, person):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
@@ -403,10 +454,10 @@ class CodeBot:
             return
 
         self.db.CodeBot.bans.delete_one({"username":person.replace("@", "")})
-        
+
         ctx.send_msg(f"unbanned @{person} from this bot")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def add_todo(self, ctx, *args):  # *args is the todo
         if not ctx.user.username in self.admins:
             ctx.send_msg(f"@{ctx.user.username} you dont have permision to add a todo",
@@ -418,7 +469,7 @@ class CodeBot:
 
         ctx.send_msg("Added the todo to `todo.txt`")
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def todo(self, ctx, line):
         with open("todo.txt", "r") as f:
             lines = f.readlines()
@@ -427,7 +478,7 @@ class CodeBot:
                 return
             ctx.send_msg(lines[int(line) - 1])
 
-    @command()
+    @ RunDecoratorOnInit(command())
     def remove_todo(self, ctx, *args):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
@@ -443,17 +494,19 @@ class CodeBot:
                     f.write(i)
         ctx.send_msg("removed todo")
 
+    @ RunDecoratorOnInit(command())
     def dm(self, *args):
         self.db.CodeBot.dms.insert_one({"_id":uuid.uuid4().hex, 'username':args[0], 'message':args[1]})
 
 if __name__ == "__main__":
   with open("logs/" + filename, 'a') as f:
-        
+
     bot = CodeBot(f)
+    bot.generate_help()
     bot.run(env['Username'], env['Password'])
 
 
 
-        
-        
+
+
 
