@@ -92,55 +92,27 @@ class BotMngr(Bot):
         self.run_cb("error", args=(e,))
 
 
-def  RunDecoratorOnInit(decorator ,*args, **kwargs):
+def  RunDecoratorOnInit(decorator):
   def inner(function):
     def wrapper(*args, **kwargs):
       function(*args, **kwargs)
     wrapper.original = function
     wrapper.ClassRunDecorator = True
     wrapper.decorator = decorator
-    func.args = args
-    func.kwargs = kwargs
+
     return wrapper
   return inner
 
 
-def cls_RunDecoratorOnInit(cls):
-  """
-  A Util function for running decorators on
-  """
-  need_updated = []
-  for method in inspect.getmembers(cls, predicate=inspect.isfunction):
-    if hasattr(method[1], "ClassRunDecorator"):
-       need_updated.append(method[0])
 
+def clsInit(func):
+  def inner(self, *args, **kwargs) -> None: 
+    for name, func in self.__dict__.items():
+        if hasattr(func,"ClassRunDecorator"):
+            setattr(name, func.decorator(func.original))
+            
+    func(self, *args, **kwargs)
 
-  def inner(*args, **kwargs):
-     self = cls(*args, **kwargs)
-     for name in need_updated:
-       wrapper = getattr(self, name)
-       func = wrapper.orginal
-       decorator = copy.deepcopy(wrapper.decorator)
-
-
-       func_args = func.args
-       func_kwargs = func.kwargs
-
-       decorated = decorator(func)
-
-       inspect.Signature(decorated).bind(*func_args, *func_kwargs)
-
-
-       setattr(self, name, decorated)
-     return self
-
-
-
-
-
-
-
-@cls_RunDecoratorOnInit
 class CodeBot:
     def run(self, *args):
       self.bot.run(*args)
@@ -159,6 +131,7 @@ class CodeBot:
       msg.data = msg.data.split(self.bot.prefix, 1)[1]
       bot.run_command(msg)
 
+    @clsInit
     def __init__(self, debug_file):
         self.bot = BotMngr(self, prefix="@CodeBot", debug=True, debug_out=debug_file)
         self.ignore_functions = []
