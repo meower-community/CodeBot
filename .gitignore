@@ -3,4 +3,7 @@ db/
 
 *replit*
 *venv*
-logs/
+logs
+
+__pycashe__
+
