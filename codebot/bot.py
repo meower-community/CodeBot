@@ -4,7 +4,7 @@ from MeowerBot.commands import command, AppCommand
 from MeowerBot.cog import Cog
 
 import datetime
-
+import pathlib
 from montydb import set_storage
 
 from cog import CommandsCog
@@ -13,10 +13,12 @@ set_storage("./db/CodeBot", cache_modified=0)
 
 
 now = datetime.datetime.now()
-filename = now.strftime("%d-%m-%Y_%H:%M:%S") + ".log"
 
-with open("logs/" + filename, "w"):
-  pass #create the file
+path = pathlib.Path("logs" / now.strftime("%d-%m-%y"))
+filename = now.strftime("%H:%M:%S") + ".log"
+
+path.mkdir(parents=True)
+file = path / filename
 
 class BotMngr(Bot):
   """
@@ -28,7 +30,7 @@ class BotMngr(Bot):
 
 
 if __name__ == "__main__":
-  with open("logs/" + filename, 'a') as f:
+  with file.open("a") as f:
 
     bot = BotMngr(debug=True, debug_file=f, prefix="@CodeBot ")
 
