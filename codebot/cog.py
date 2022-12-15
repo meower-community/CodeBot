@@ -1,28 +1,16 @@
 
-from MeowerBot import Bot, __version__
-from MeowerBot.context import CTX, Post, User
-from MeowerBot.commands import command, AppCommand
-from MeowerBot.cog import Cog
-import inspect
-import copy
-
 import datetime
-
-from os import environ as env
-import shlex
-from random import randint, choice
-import time
 import string
+import time
 import uuid
-import optparse
-#calc current time
+from os import environ as env
+from random import choice, randint
 
-import traceback
-
-from montydb import MontyClient, set_storage
-
-set_storage("./db/CodeBot", cache_modified=0)
-
+from MeowerBot import Bot, __version__
+from MeowerBot.cog import Cog
+from MeowerBot.command import AppCommand, command
+from MeowerBot.context import CTX, Post, User
+from montydb import MontyClient
 
 now = datetime.datetime.now()
 filename = now.strftime("%d-%m-%Y_%H:%M:%S") + ".txt"
@@ -67,7 +55,8 @@ class CommandsCog(Cog):
     def __init__(self, bot):
       self.bot = bot
       self.db = MontyClient("./db/CodeBot")
-      self.pages = None
+      self.pages = []
+      self.admins = ["ShowierData9978"]
       Cog.__init__(self)
   
 
@@ -94,7 +83,7 @@ class CommandsCog(Cog):
             self.pages.append(page)
             page = ""
           page += f"{current_cmd}\n"
-          page += cmd_size+1
+          page_size += cmd_size+1
 
 
 
@@ -163,7 +152,7 @@ class CommandsCog(Cog):
 
         email = ""
         for i in range(randint(1, 5)):
-          email + choice(email_names)
+          email += choice(email_names)
 
         email+="@"+choice(email_names)+"."+choice([
             "com", "org", "net", "edu", "gov", "mil", "biz", "info", "name"])
@@ -216,6 +205,8 @@ class CommandsCog(Cog):
       sender = self.db.CodeBot.users.find_one(
           {"username":ctx.user.username}
         )
+      assert sender is not None
+
       recever = self.db.CodeBot.users.find_one({"username":user})
 
       if not sender['coins'] > int(coins):
@@ -240,7 +231,7 @@ class CommandsCog(Cog):
         }
       )
 
-      self.reply("sent the coins!")
+      ctx.reply("sent the coins!")
 
     @command()
     def beg(self, ctx):
@@ -248,8 +239,8 @@ class CommandsCog(Cog):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
         usr = self.db.CodeBot.users.find_one({"username":ctx.user.username})
-
-
+        assert usr is not None
+        
         if not time.time() - usr["t"] >= 60 * 3:  # 3 minutes
             ctx.send_msg(
                 f"@{ctx.user.username} You cant run this command yet (cooldown)\n you have " + str(datetime.timedelta(seconds=round((60*3-(time.time() - usr["t"]))))) + " left")
@@ -281,7 +272,7 @@ class CommandsCog(Cog):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
         user = self.db.CodeBot.users.find_one({"username":usr})
-
+        assert user is not None
         ctx.send_msg(
                 f"@{ctx.user.username} user {usr} has {user['coins']} coins!")
 
@@ -291,6 +282,7 @@ class CommandsCog(Cog):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
 
         usr = self.db.CodeBot.users.find_one({'username':ctx.user.username})
+        assert usr is not None
 
         ctx.send_msg(
             f"@{ctx.user.username} you have the the items\n" +
@@ -302,7 +294,7 @@ class CommandsCog(Cog):
     def shop(self, ctx):
         msg = ""
         for n, v in Shop.items():
-            msg + f"name: {n}, value: {v} coins \n"
+            msg += f"name: {n}, value: {v} coins \n"
         ctx.send_msg(msg)
 
     @command(args=1)
@@ -314,6 +306,7 @@ class CommandsCog(Cog):
             return
 
         usr = self.db.CodeBot.users.find_one({'username':ctx.user.username})
+        assert usr is not None
         if not Shop[item] <= usr["coins"]:
             ctx.send_msg(
                 f"@{ctx.user.username} You do not have enough coins for {item}")
@@ -328,8 +321,7 @@ class CommandsCog(Cog):
     def ban(self, ctx, person):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
-                f"@{ctx.user.username} you dont have permision to ban from this bot.",
-                raw)
+                f"@{ctx.user.username} you dont have permision to ban from this bot.")
             return
         self.db.CodeBot.bans.insert_one({'_id':uuid.uuid4(), "username": person.replace("@", "")})
         ctx.send_msg(f"Banned @{person} from this bot")

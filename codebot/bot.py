@@ -1,20 +1,17 @@
-from MeowerBot import Bot, __version__
-from MeowerBot.context import CTX, Post, User
-from MeowerBot.commands import command, AppCommand
-from MeowerBot.cog import Cog
-
 import datetime
 import pathlib
-from montydb import set_storage
+from os import environ as env
 
 from cog import CommandsCog
+from MeowerBot import Bot, __version__
+from montydb import set_storage
 
 set_storage("./db/CodeBot", cache_modified=0)
 
 
 now = datetime.datetime.now()
 
-path = pathlib.Path("logs" / now.strftime("%d-%m-%y"))
+path = pathlib.Path("logs/" +  now.strftime("%d-%m-%y"))
 filename = now.strftime("%H:%M:%S") + ".log"
 
 path.mkdir(parents=True)
