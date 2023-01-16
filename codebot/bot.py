@@ -41,8 +41,8 @@ def ulist(users, **kwargs):
 
 if __name__ == "__main__":
   with file.open("a") as f:
-   import logging
-   logging.basicConfig(level=logging.WARN,
+    import logging
+    logging.basicConfig(level=logging.WARN,
                     format='%(asctime)s %(filename)s %(funcName)s %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
