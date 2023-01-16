@@ -1,6 +1,5 @@
 from typing import Optional, Any
 
-import datetime
 import pathlib
 from os import environ as env
 
@@ -11,10 +10,7 @@ from montydb import set_storage
 set_storage("./db/CodeBot", cache_modified=0)
 
 
-now = datetime.datetime.now()
 
-
-file.touch(exist_ok=True)
 
 class BotMngr(Bot):
   """
@@ -40,11 +36,11 @@ def ulist(users, **kwargs):
 
 
 if __name__ == "__main__":
-  with file.open("a") as f:
     import logging
-    logging.basicConfig(level=logging.WARN,
-                    format='%(asctime)s %(filename)s %(funcName)s %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S')
+    
+    
+    #to a file
+    logging.basicConfig(filename='logs/codebot.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
     bot = BotMngr(prefix="@CodeBot ")
     bot.callback(ulist)
