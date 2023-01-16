@@ -13,12 +13,6 @@ set_storage("./db/CodeBot", cache_modified=0)
 
 now = datetime.datetime.now()
 
-path = pathlib.Path("logs/" +  now.strftime("%d-%m-%y"))
-filename = (str(now.strftime("%H-%M-%S")) + ".log")
-
-path.mkdir(parents=True, exist_ok=True)
-file = path / filename
-
 
 file.touch(exist_ok=True)
 
@@ -47,15 +41,19 @@ def ulist(users, **kwargs):
 
 if __name__ == "__main__":
   with file.open("a") as f:
+   import logging
+   logging.basicConfig(level=logging.WARN,
+                    format='%(asctime)s %(filename)s %(funcName)s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
-    bot = BotMngr(debug=True, debug_out=f, prefix="@CodeBot ")
+    bot = BotMngr(prefix="@CodeBot ")
     bot.callback(ulist)
 
     cog = CommandsCog(bot)
     bot.register_cog(cog)
 
     cog.generate_help()
-    bot.run("ThisIsShowier", "Gisd12102007")
+    bot.run("CodeBot", env['password'])
 
 
 
