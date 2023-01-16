@@ -5,5 +5,5 @@ db/
 *venv*
 logs
 
-__pycashe__
+__pycashe__/*
 

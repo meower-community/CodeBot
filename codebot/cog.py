@@ -12,12 +12,6 @@ from MeowerBot.command import AppCommand, command
 from MeowerBot.context import CTX, Post, User
 from montydb import MontyClient
 
-now = datetime.datetime.now()
-filename = now.strftime("%d-%m-%Y_%H:%M:%S") + ".txt"
-
-with open("logs/" + filename, "w"):
-  pass #create the file
-
 
 #constents
 
@@ -48,13 +42,11 @@ email_names = [
 
 
 class CommandsCog(Cog):
-    def run(self, *args):
-      self.bot.run(*args)
-      
 
     def __init__(self, bot):
       self.bot = bot
       self.db = MontyClient("./db/CodeBot")
+      self.bot.db = self.db
       self.pages = []
       self.admins = ["ShowierData9978"]
       Cog.__init__(self)
@@ -69,7 +61,7 @@ class CommandsCog(Cog):
           func = self.bot.commands[name]
           command = func["command"]
          
-          current_cmd = f"{self.bot.prefix}{func.name}"
+          current_cmd = f"{self.bot.prefix}{command.name}"
           if func["args"] is 0:
             current_cmd += f" <args: Any"
           else:
@@ -79,7 +71,7 @@ class CommandsCog(Cog):
           
           cmd_size = len(current_cmd)
           
-          if page_size + cmd_size > 300:
+          if (page_size + cmd_size) > 300:
             self.pages.append(page)
             page = ""
           page += f"{current_cmd}\n"
@@ -96,12 +88,13 @@ class CommandsCog(Cog):
 
     @command(name="help", args=1)
     def help(self, ctx, page):
+        page = int(page)
 
         if len(self.pages) < page:
            ctx.reply(f"I only have {len(self.pages)} help pages ):")
            return
 
-        ctx.reply("\n" + "\n".join(self.pages[page]))
+        ctx.send_msg(self.pages[page-1])
 
     @command()
     def mimic(self, ctx:CTX, *args):
@@ -112,7 +105,7 @@ class CommandsCog(Cog):
 
     @command(args=1)
     def info(self, ctx:CTX, about):
-      if about == "Bot":
+      if about.lower() == "bot":
            ctx.send_msg(f"""
     Bot Info:
   Owned by @ShowierData9978
@@ -121,7 +114,7 @@ class CommandsCog(Cog):
             """)
       elif about == "website":
          ctx.send_msg("https://showierdata.tech")
-      elif about.lower() == "Webhooks":
+      elif about.lower() == "webhooks":
         ctx.send_msg("""
         webhooks is a bot that is hosted by @ShowierData9978 on his RPI.
     You can send a message through it with the URL
@@ -314,7 +307,7 @@ class CommandsCog(Cog):
 
         self.db.CodeBot.users.update_one(
           {"username":ctx.user.username},
-          {"$push":{"collectables":[item]}, "$set": {"coins": usr["coins"] - Shop[item]}
+          {"$push":{"collectables":item}, "$set": {"coins": usr["coins"] - Shop[item]}
         })
 
     @command(args=1)
@@ -379,6 +372,7 @@ class CommandsCog(Cog):
                     f.write(i)
         ctx.send_msg("removed todo")
 
-    @command()
-    def dm(self, *args):
-        self.db.CodeBot.dms.insert_one({"_id":uuid.uuid4().hex, 'username':args[0], 'message':args[1]})
+    @command(args=2)
+    def dm(self, ctx: CTX, user , message):
+        self.db.CodeBot.dms.insert_one({"_id":uuid.uuid4().hex, 'username': user, 'message':message, "sender": ctx.user.username})
+        ctx.reply(f"dm'd {user}")

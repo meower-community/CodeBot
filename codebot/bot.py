@@ -1,3 +1,5 @@
+from typing import Optional, Any
+
 import datetime
 import pathlib
 from os import environ as env
@@ -12,10 +14,13 @@ set_storage("./db/CodeBot", cache_modified=0)
 now = datetime.datetime.now()
 
 path = pathlib.Path("logs/" +  now.strftime("%d-%m-%y"))
-filename = now.strftime("%H:%M:%S") + ".log"
+filename = (str(now.strftime("%H-%M-%S")) + ".log")
 
-path.mkdir(parents=True)
+path.mkdir(parents=True, exist_ok=True)
 file = path / filename
+
+
+file.touch(exist_ok=True)
 
 class BotMngr(Bot):
   """
@@ -24,18 +29,33 @@ class BotMngr(Bot):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
+    self.db:Any = None
+
+def ulist(users, **kwargs):
+        bot = kwargs['bot']
+
+        if bot.logging_in: return
+        assert bot is not None
+        for user in users:
+          dm = bot.db.CodeBot.dms.find_one({'username': user})
+          if dm:
+            bot.send_msg(f"@{dm['username']}, @{dm['sender']} send you a DM\n so here it is!:\n\t{dm['message']}")
+            bot.db.CodeBot.dms.delete_one({"username": user})
+            return
+
 
 
 if __name__ == "__main__":
   with file.open("a") as f:
 
-    bot = BotMngr(debug=True, debug_file=f, prefix="@CodeBot ")
+    bot = BotMngr(debug=True, debug_out=f, prefix="@CodeBot ")
+    bot.callback(ulist)
 
     cog = CommandsCog(bot)
     bot.register_cog(cog)
 
     cog.generate_help()
-    bot.run(env['Username'], env['Password'])
+    bot.run("ThisIsShowier", "Gisd12102007")
 
 
 
