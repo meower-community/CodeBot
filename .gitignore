@@ -1,2 +1,9 @@
 db/
 *.json
+
+*replit*
+*venv*
+logs
+
+__pycashe__/*
+

@@ -3,3 +3,4 @@ Add Tradeing
 Add a way to give money away
 add cooldown time to @CodeBot beg Cooldown
 Add a way to add to the shop without editing code
+a
