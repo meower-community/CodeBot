@@ -61,6 +61,9 @@ class CommandsCog(Cog):
           func = self.bot.commands[name]
           command = func["command"]
          
+          if 'self' in func['arg_names']: func['arg_names'].remove("self")
+          if 'ctx' in func['arg_names']: func['arg_names'].remove("ctx")
+
           current_cmd = f"{self.bot.prefix}{command.name}"
           if func["args"] is 0:
             current_cmd += f" <args: Any"
@@ -76,6 +79,7 @@ class CommandsCog(Cog):
             page = ""
           page += f"{current_cmd}\n"
           page_size += cmd_size+1
+
 
 
 
@@ -128,7 +132,7 @@ class CommandsCog(Cog):
 
     @command(args=1)
     def hack(self, ctx:CTX, user):
-        if user == env['Username']:
+        if user == env.get('Username', "CodeBot"):
             ctx.send_msg("Im Not hacking myself, RUDE.")
             return
 

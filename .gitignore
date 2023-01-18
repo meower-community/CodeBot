@@ -5,5 +5,7 @@ db/
 *venv*
 logs
 
+codebot.log
+
 __pycashe__/*
 
