@@ -39,6 +39,18 @@ email_names = [
     "electron", "tempt", "disagree", "holiday", "series"
 ]
 
+#import wrapper stuff
+import functools
+
+def noHome(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        ctx: CTX = args[1]
+        if ctx.message.origin == "home":
+            ctx.reply("You are not allowed to use this command in home")
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 class CommandsCog(Cog):
@@ -92,6 +104,10 @@ class CommandsCog(Cog):
 
     @command(name="help", args=1)
     def help(self, ctx, page=1):
+        if ctx.message.origin == "home":
+            ctx.send_msg("Only 2 commands are allowed in home\n\n help, and joinGC")
+            return
+            
         page = int(page)
 
         if len(self.pages) < page:
@@ -100,7 +116,16 @@ class CommandsCog(Cog):
 
         ctx.send_msg(self.pages[page-1])
 
+    @command(args=0)
+    def joinGC(self, ctx:CTX):
+        self.bot.wss.sendPacket({"cmd": "direct", "val":  { "cmd": "add_to_chat", "val": {"chatid": "cdeb8efc-3d45-4483-bc1f-9ed91566cf72", "username": ctx.message.user.username} } })
+
+        ctx.reply("Added to CodeBot GC")
+
+
+
     @command()
+    @noHome
     def mimic(self, ctx:CTX, *args):
       if not ctx.user.username in self.admins:
         ctx.reply("This Command Is Bot admin locked ):")
@@ -108,6 +133,7 @@ class CommandsCog(Cog):
       ctx.send_msg(" ".join(args))
 
     @command(args=1)
+    @noHome
     def info(self, ctx:CTX, about):
       if about.lower() == "bot":
            ctx.send_msg(f"""
@@ -131,6 +157,7 @@ class CommandsCog(Cog):
         """)
 
     @command(args=1)
+    @noHome
     def hack(self, ctx:CTX, user):
         if user == self.bot.username:
             ctx.send_msg("Im Not hacking myself, RUDE.")
@@ -192,6 +219,7 @@ class CommandsCog(Cog):
         ctx.send_msg(f"Finished Hacking @{user}`s Account")
 
     @command(args=2)
+    @noHome
     def send_coins(self, ctx, user, coins):
       if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
         self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
@@ -231,6 +259,7 @@ class CommandsCog(Cog):
       ctx.reply("sent the coins!")
 
     @command()
+    @noHome
     def beg(self, ctx):
         if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
@@ -258,6 +287,7 @@ class CommandsCog(Cog):
         ctx.send_msg(f"@{ctx.user.username} You got {amm} coins!")
 
     @command()
+    @noHome
     def bal(self, ctx, *args):
         try:
           usr = args[0]
@@ -274,6 +304,7 @@ class CommandsCog(Cog):
                 f"@{ctx.user.username} user {usr} has {user['coins']} coins!")
 
     @command()
+    @noHome
     def inventory(self, ctx):
         if not self.db.CodeBot.users.find_one({"username":ctx.user.username}):
           self.db.CodeBot.users.insert_one({"_id":uuid.uuid4().hex, "username":ctx.user.username, "coins": 0, "collectables": [], "t": 0})
@@ -288,6 +319,7 @@ class CommandsCog(Cog):
         )
 
     @command()
+    @noHome
     def shop(self, ctx):
         msg = ""
         for n, v in Shop.items():
@@ -295,6 +327,7 @@ class CommandsCog(Cog):
         ctx.send_msg(msg)
 
     @command(args=1)
+    @noHome
     def buy(self, ctx, item):
         if not item in Shop.keys():
             ctx.send_msg(
@@ -315,6 +348,7 @@ class CommandsCog(Cog):
         })
 
     @command(args=1)
+    @noHome
     def ban(self, ctx, person):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
@@ -324,6 +358,7 @@ class CommandsCog(Cog):
         ctx.send_msg(f"Banned @{person} from this bot")
 
     @command(args=1)
+    @noHome
     def unban(self, ctx, person):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
@@ -340,6 +375,7 @@ class CommandsCog(Cog):
         ctx.send_msg(f"unbanned @{person} from this bot")
 
     @command()
+    @noHome
     def add_todo(self, ctx, *args):  # *args is the todo
         if not ctx.user.username in self.admins:
             ctx.send_msg(f"@{ctx.user.username} you dont have permision to add a todo",
@@ -352,6 +388,7 @@ class CommandsCog(Cog):
         ctx.send_msg("Added the todo to `todo.txt`")
 
     @command(args=1)
+    @noHome
     def todo(self, ctx, line):
         with open("todo.txt", "r") as f:
             lines = f.readlines()
@@ -361,6 +398,7 @@ class CommandsCog(Cog):
             ctx.send_msg(lines[int(line) - 1])
 
     @command()
+    @noHome
     def remove_todo(self, ctx, *args):
         if not ctx.user.username in self.admins:
             ctx.send_msg(
