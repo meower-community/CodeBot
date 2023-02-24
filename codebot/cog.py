@@ -10,8 +10,8 @@ from MeowerBot import Bot, __version__
 from MeowerBot.cog import Cog
 from MeowerBot.command import AppCommand, command
 from MeowerBot.context import CTX, Post, User
-from montydb import MontyClient
 
+from pymongo import MongoClient
 
 #constents
 
@@ -45,7 +45,7 @@ class CommandsCog(Cog):
 
     def __init__(self, bot):
       self.bot = bot
-      self.db = MontyClient("./db/CodeBot")
+      self.db = MongoClient(env.get("MONGO_URI", "mongodb://localhost:27017/"))
       self.bot.db = self.db
       self.pages = []
       self.admins = ["ShowierData9978"]
@@ -91,7 +91,7 @@ class CommandsCog(Cog):
 
 
     @command(name="help", args=1)
-    def help(self, ctx, page):
+    def help(self, ctx, page=1):
         page = int(page)
 
         if len(self.pages) < page:
@@ -132,7 +132,7 @@ class CommandsCog(Cog):
 
     @command(args=1)
     def hack(self, ctx:CTX, user):
-        if user == env.get('Username', "CodeBot"):
+        if user == self.bot.username:
             ctx.send_msg("Im Not hacking myself, RUDE.")
             return
 

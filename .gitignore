@@ -7,5 +7,6 @@ logs
 
 codebot.log
 
-__pycashe__/*
+*pycashe*
 
+.env
