@@ -46,10 +46,11 @@ def noHome(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         ctx: CTX = args[1]
-        if ctx.message.origin == "home":
-            ctx.reply("You are not allowed to use this command in home")
+        if ctx.message.chat == "home":
+            ctx.reply("You are not allowed to use this command in home. run @CodeBot joinGC to join the CodeBot GC")
+            return
         return func(*args, **kwargs)
-
+    functools.update_wrapper(wrapper, func)
     return wrapper
 
 
@@ -103,8 +104,8 @@ class CommandsCog(Cog):
 
 
     @command(name="help", args=1)
-    def help(self, ctx, page=1):
-        if ctx.message.origin == "home":
+    def help(self, ctx: CTX, page=1):
+        if ctx.message.chat == "home":
             ctx.send_msg("Only 2 commands are allowed in home\n\n help, and joinGC")
             return
             
