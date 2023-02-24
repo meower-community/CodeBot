@@ -48,7 +48,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename='logs/codebot.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
     #logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
-    bot = BotMngr(prefix="@CodeBot ")
+    bot = BotMngr(prefix="@CodeBot ", autoreload=0)
     bot.callback(ulist)
 
     cog = CommandsCog(bot)
