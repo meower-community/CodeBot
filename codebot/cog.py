@@ -92,6 +92,7 @@ class CommandsCog(Cog):
             page = ""
           page += f"{current_cmd}\n"
           page_size += cmd_size+1
+        self.pages.append(page)
 
 
 
