@@ -87,7 +87,7 @@ class CommandsCog(Cog):
           
           cmd_size = len(current_cmd)
           
-          if (page_size + cmd_size) > 300:
+          if (page_size + cmd_size) > 2000:
             self.pages.append(page)
             page = ""
           page += f"{current_cmd}\n"
@@ -106,7 +106,7 @@ class CommandsCog(Cog):
     @command(name="help", args=1)
     def help(self, ctx: CTX, page=1):
         if ctx.message.chat == "home":
-            ctx.send_msg("Only 2 commands are allowed in home\n\n help, and joinGC")
+            ctx.send_msg("Only 5 commands are allowed in home\n\n help, joinGC, mimic, info, and dm")
             return
             
         page = int(page)
@@ -126,7 +126,6 @@ class CommandsCog(Cog):
 
 
     @command()
-    @noHome
     def mimic(self, ctx:CTX, *args):
       if not ctx.user.username in self.admins:
         ctx.reply("This Command Is Bot admin locked ):")
@@ -134,7 +133,6 @@ class CommandsCog(Cog):
       ctx.send_msg(" ".join(args))
 
     @command(args=1)
-    @noHome
     def info(self, ctx:CTX, about):
       if about.lower() == "bot":
            ctx.send_msg(f"""
@@ -341,6 +339,7 @@ class CommandsCog(Cog):
         if not Shop[item] <= usr["coins"]:
             ctx.send_msg(
                 f"@{ctx.user.username} You do not have enough coins for {item}")
+            return
 
 
         self.db.CodeBot.users.update_one(
